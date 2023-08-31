@@ -3,13 +3,31 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/therealkevinard/gitdir/commands"
+	"github.com/therealkevinard/gitdir/commands/cd"
 	"github.com/therealkevinard/gitdir/commands/clone"
 )
 
 func main() {
-	cmd := clone.NewCommand()
+	if len(os.Args) == 0 {
+		return
+	}
+
+	var cmd commands.Command
+
+	switch os.Args[1] {
+	case "clone":
+		cmd = clone.NewCommand()
+
+	case "cd":
+		cmd = cd.NewCommand()
+
+	default:
+		cmd = clone.NewCommand()
+	}
+
 	exec(cmd)
 }
 

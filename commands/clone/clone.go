@@ -48,10 +48,12 @@ func (c *Command) Run() error {
 	// create clone directory
 	c.localDir = dirtools.CompileDirPath(c.collectionRoot, subPath)
 	if _, err = os.Stat(c.localDir); !errors.Is(err, os.ErrNotExist) {
-		log.Fatalf("!! directory exists. not re-creating %s", c.localDir)
+		fmt.Printf("!! directory exists. not re-creating %s\n", c.localDir)
+		log.Fatal("exiting")
 	}
 
 	fmt.Printf("> creating %s\n", c.localDir)
+	//nolint:gomnd
 	if err = os.MkdirAll(c.localDir, 0o750); err != nil {
 		log.Fatalf("!! error creating base directory: %v", err)
 	}
