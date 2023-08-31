@@ -1,0 +1,116 @@
+# golangci-lint config file: https://golangci-lint.run/
+# see https://golangci-lint.run/usage/linters for index of linters/configs
+run:
+  timeout: 5m
+  tests: false
+  skip-dirs: [ ]
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+  uniq-by-line: false
+  path-prefix: ""
+  sort-results: true
+
+issues:
+  # @self: issues.new: true only checks vcs-changed files. nice, but will break general linting
+  new: false # true
+  exclude-rules:
+    - linters:
+        - revive
+      text: "var-naming: don't use an underscore in package name"
+
+linters:
+  presets:
+    - bugs
+    - comment
+    - complexity
+    - error
+    - format
+    - import
+    - metalinter
+    - module
+    - performance
+    - sql
+    - style
+    - test
+    - unused
+  enable:
+    - exportloopref
+  disable:
+    # -- temp disable
+#    - nolintlint  # this one should really be a periodic backsweep for nolint plaque
+#    - dupl        # these can be resolved in a later refactor
+    - depguard
+    - wsl
+    - forbidigo
+
+
+linters-settings:
+  funlen:
+    lines: 180
+    statements: -1
+  gocritic:
+    enabled-checks:
+      - truncateCmp
+      - unnamedResult
+      - nestingReduce
+    enabled-tags:
+      - diagnostic
+      - style
+      - opinionated
+      - performance
+    disabled-tags:
+      - experimental
+
+    # Settings passed to gocritic.
+    # The settings key is the name of a supported gocritic checker.
+    # The list of supported checkers can be find in https://go-critic.github.io/overview.
+    settings:
+      captLocal: # must be valid enabled check name
+        # whether to restrict checker to params only (default true)
+        paramsOnly: true
+      elseif:
+        # whether to skip balanced if-else pairs (default true)
+        skipBalanced: true
+      hugeParam:
+        # size in bytes that makes the warning trigger (default 80)
+        sizeThreshold: 80
+      nestingReduce:
+        # min number of statements inside a branch to trigger a warning (default 5)
+        bodyWidth: 5
+      rangeExprCopy:
+        # size in bytes that makes the warning trigger (default 512)
+        sizeThreshold: 512
+        # whether to check test functions (default true)
+        skipTestFuncs: true
+      rangeValCopy:
+        # size in bytes that makes the warning trigger (default 128)
+        sizeThreshold: 32
+        # whether to check test functions (default true)
+        skipTestFuncs: true
+      truncateCmp:
+        # whether to skip int/uint/uintptr types (default true)
+        skipArchDependent: true
+      underef:
+        # whether to skip (*x).method() calls where x is a pointer receiver (default true)
+        skipRecvDeref: true
+      unnamedResult:
+        # whether to check exported functions
+        checkExported: true
+  gocyclo:
+    min-complexity: 14
+  cyclop:
+    max-complexity: 14
+  lll:
+    line-length: 180 # boo, but proto interfaces tend to be wide.
+  maligned:
+    suggest-new: false
+  nlreturn:
+    block-size: 3
+  varnamelen:
+    max-distance: 10
+    ignore-names: [ "s", "g", "i", "v", "k", "wg", "ok", "err", "db", "qb", "in", "out", "from", "to", "tx", "txn", "id" ]
+  stylecheck:
+    checks: [ "-ST1003" ]
