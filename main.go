@@ -10,8 +10,9 @@ import (
 )
 
 func main() {
-	if len(os.Args) == 0 {
-		return
+	if len(os.Args) == 1 {
+		// TODO: maybe default to `cd` command, which can work with no arguments?
+		log.Fatal("not enough arguments")
 	}
 
 	var cmd commands.Command
