@@ -5,11 +5,14 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/charmbracelet/bubbles/spinner"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/therealkevinard/gitdir/dirtools"
 	"github.com/therealkevinard/gitdir/ui/styles"
 	"log"
 	"os"
 	"os/exec"
+	"time"
 )
 
 type Command struct {
@@ -42,9 +45,24 @@ func (c *Command) Flags() {
 	c.collectionRoot = os.ExpandEnv(c.collectionRoot)
 }
 
+type statusTextUpdate string
+
 // Run wraps a complete execution, cloning repoURL under root
 // it has little internal logic - mostly just composing other work with terminal output.
 func (c *Command) Run() error {
+	m := &model{}
+	m.spinner = spinner.New()
+	m.spinner.Spinner = spinner.MiniDot
+
+	// run ui in a separate goroutine
+	go func() {
+		if _, err := tea.NewProgram(m).Run(); err != nil {
+			fmt.Println("Error running program:", err)
+			os.Exit(1)
+		}
+	}()
+
+	m.Update(statusTextUpdate("normalizing repo url"))
 	subPath, err := dirtools.NormalizeRepoURL(c.repoURL)
 	if err != nil {
 		styles.Println(styles.ErrorLevel, "failed normalizing repo: %v", err)
@@ -52,6 +70,7 @@ func (c *Command) Run() error {
 	}
 
 	// create clone directory
+	m.Update(statusTextUpdate("checking directories"))
 	c.localDir = dirtools.CompileDirPath(c.collectionRoot, subPath)
 	if _, err = os.Stat(c.localDir); !errors.Is(err, os.ErrNotExist) {
 		err = os.ErrExist
@@ -59,7 +78,6 @@ func (c *Command) Run() error {
 		return err
 	}
 
-	styles.Println(styles.OKLevel, "creating %s", c.localDir)
 	//nolint:gomnd
 	if err = os.MkdirAll(c.localDir, 0o750); err != nil {
 		styles.Println(styles.ErrorLevel, "error creating base directory: %v", err)
@@ -67,22 +85,21 @@ func (c *Command) Run() error {
 	}
 
 	// clone operation
-	styles.Println(styles.OKLevel, "cloning %s into %s", c.repoURL, c.localDir)
+	m.Update(statusTextUpdate(fmt.Sprintf("cloning %s", c.repoURL)))
 	out, err := c.cloneRepo()
 	if err != nil {
 		styles.Println(styles.ErrorLevel, "error cloning. leaving empty dir at %s", c.localDir)
 		return err
 	}
 
+	m.Update(statusTextUpdate("finished"))
 	// status output
-	parts := []string{
-		styles.OKTextf("finished. git says:"),
-		styles.AltTextStyle.PaddingLeft(4).Render(string(out)),
-		styles.OKTextf("done here."),
-	}
-	for _, v := range parts {
-		fmt.Println(v)
-	}
+	styles.Println(styles.OKLevel, "finished. cloned %s into %s", c.repoURL, c.localDir)
+	styles.Println(styles.OKLevel, "git says:")
+	fmt.Println(styles.AltTextStyle.PaddingLeft(4).Render(string(out)))
+	styles.Println(styles.OKLevel, "done here.")
+
+	time.Sleep(time.Second)
 
 	return err
 }
@@ -102,5 +119,7 @@ func (c *Command) cloneRepo() ([]byte, error) {
 		return nil, fmt.Errorf("error running git clone: %w", err)
 	}
 
-	return out.Bytes(), nil
+	ret := out.Bytes()[:64]
+	ret = append(ret, []byte("...")...)
+	return ret, nil
 }
