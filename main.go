@@ -5,6 +5,8 @@ import (
 	"github.com/therealkevinard/gitdir/ui/styles"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/therealkevinard/gitdir/commands"
 	"github.com/therealkevinard/gitdir/commands/cd"
@@ -30,6 +32,10 @@ func main() {
 		cmd = clone.NewCommand()
 	}
 
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
+
+	go listenInterrupt(cmd, signals)
 	exec(cmd)
 }
 
@@ -45,4 +51,11 @@ func exec(cmd commands.Command) {
 	}
 
 	styles.Println(styles.OKLevel, "[%s] finished", cmd.GetName())
+}
+
+func listenInterrupt(cmd commands.Command, interruptChan chan os.Signal) {
+	select {
+	case <-interruptChan:
+		cmd.Stop()
+	}
 }

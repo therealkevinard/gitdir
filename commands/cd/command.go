@@ -64,6 +64,8 @@ func (c *Command) Run() error {
 	return nil
 }
 
+func (c *Command) Stop() {}
+
 func (c *Command) ui() {
 	const (
 		defaultWidth = 20

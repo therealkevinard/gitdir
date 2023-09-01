@@ -7,4 +7,6 @@ type Command interface {
 	Flags()
 	// Run is the actual command execution
 	Run() error
+	// Stop is used to interrupt in response to os signals
+	Stop()
 }

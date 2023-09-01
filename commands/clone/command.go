@@ -12,13 +12,14 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"time"
 )
 
 type Command struct {
 	collectionRoot string
 	repoURL        string
 	localDir       string
+	runningCmd     *exec.Cmd
+	ui             *model
 }
 
 func NewCommand() *Command {
@@ -50,19 +51,19 @@ type statusTextUpdate string
 // Run wraps a complete execution, cloning repoURL under root
 // it has little internal logic - mostly just composing other work with terminal output.
 func (c *Command) Run() error {
-	m := &model{}
-	m.spinner = spinner.New()
-	m.spinner.Spinner = spinner.MiniDot
+	c.ui = &model{}
+	c.ui.spinner = spinner.New()
+	c.ui.spinner.Spinner = spinner.MiniDot
 
 	// run ui in a separate goroutine
 	go func() {
-		if _, err := tea.NewProgram(m).Run(); err != nil {
+		if _, err := tea.NewProgram(c.ui).Run(); err != nil {
 			fmt.Println("Error running program:", err)
 			os.Exit(1)
 		}
 	}()
 
-	m.Update(statusTextUpdate("normalizing repo url"))
+	c.ui.Update(statusTextUpdate("normalizing repo url"))
 	subPath, err := dirtools.NormalizeRepoURL(c.repoURL)
 	if err != nil {
 		styles.Println(styles.ErrorLevel, "failed normalizing repo: %v", err)
@@ -70,7 +71,7 @@ func (c *Command) Run() error {
 	}
 
 	// create clone directory
-	m.Update(statusTextUpdate("checking directories"))
+	c.ui.Update(statusTextUpdate("checking directories"))
 	c.localDir = dirtools.CompileDirPath(c.collectionRoot, subPath)
 	if _, err = os.Stat(c.localDir); !errors.Is(err, os.ErrNotExist) {
 		err = os.ErrExist
@@ -85,23 +86,30 @@ func (c *Command) Run() error {
 	}
 
 	// clone operation
-	m.Update(statusTextUpdate(fmt.Sprintf("cloning %s", c.repoURL)))
+	c.ui.Update(statusTextUpdate(fmt.Sprintf("cloning %s", c.repoURL)))
 	out, err := c.cloneRepo()
 	if err != nil {
 		styles.Println(styles.ErrorLevel, "error cloning. leaving empty dir at %s", c.localDir)
 		return err
 	}
 
-	m.Update(statusTextUpdate("finished"))
+	c.ui.Update(statusTextUpdate("finished"))
 	// status output
 	styles.Println(styles.OKLevel, "finished. cloned %s into %s", c.repoURL, c.localDir)
 	styles.Println(styles.OKLevel, "git says:")
 	fmt.Println(styles.AltTextStyle.PaddingLeft(4).Render(string(out)))
 	styles.Println(styles.OKLevel, "done here.")
 
-	time.Sleep(time.Second)
-
 	return err
+}
+
+func (c *Command) Stop() {
+	if c.runningCmd != nil {
+		_ = c.runningCmd.Process.Kill()
+	}
+	if c.ui != nil {
+		c.ui.Update(statusTextUpdate("finished")) // magic string to shutdown bubble app. make a proper msg one day.
+	}
 }
 
 // cloneRepo runs git clone command in localDir.
@@ -115,6 +123,8 @@ func (c *Command) cloneRepo() ([]byte, error) {
 	cmd.Stderr = &out
 	cmd.Dir = c.localDir
 
+	c.runningCmd = cmd
+	defer func() { c.runningCmd = nil }()
 	if err := cmd.Run(); err != nil {
 		return nil, fmt.Errorf("error running git clone: %w", err)
 	}
