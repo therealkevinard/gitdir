@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -36,11 +35,7 @@ func exec(cmd commands.Command) {
 	cmd.Flags()
 
 	// run it
-	fmt.Printf(">> running %s command\n", cmd.GetName())
 	if err := cmd.Run(); err != nil {
 		log.Fatalf("!! command %s execution exited with: %v", cmd.GetName(), err)
 	}
-
-	// all done
-	fmt.Println("done!")
 }

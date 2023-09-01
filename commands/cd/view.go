@@ -20,7 +20,9 @@ var (
 	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
 )
 
-type itemDelegate struct{}
+type itemDelegate struct {
+	stripPrefix string
+}
 
 func (d itemDelegate) Height() int                             { return 1 }
 func (d itemDelegate) Spacing() int                            { return 0 }
@@ -33,7 +35,8 @@ func (d itemDelegate) Render(writer io.Writer, model list.Model, index int, list
 		return
 	}
 
-	str := fmt.Sprintf("%d. %s", index+1, i)
+	cleanstr := strings.TrimLeft(strings.TrimPrefix(string(i), d.stripPrefix), "/")
+	str := fmt.Sprintf("%d. %s", index+1, cleanstr)
 
 	fn := itemStyle.Render
 	if index == model.Index() {
