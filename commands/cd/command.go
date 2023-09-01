@@ -9,11 +9,12 @@ package cd
 import (
 	"flag"
 	"fmt"
+	"os"
+	"path"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/therealkevinard/gitdir/dirtools"
-	"os"
-	"path"
 )
 
 type Command struct {
@@ -91,11 +92,10 @@ func (c *Command) writeCDToSelection() error {
 	scriptpath := path.Clean(path.Join(cacheDir, "gitdir", "gdnext.sh"))
 
 	// create script
-	_ = os.MkdirAll(path.Dir(scriptpath), 0750) // TODO: check error
+	_ = os.MkdirAll(path.Dir(scriptpath), 0o750) // TODO: check error
 	f, fileErr := os.Create(scriptpath)
 	if fileErr != nil {
-		return fileErr
-
+		return fileErr //nolint:wrapcheck
 	}
 	defer func() { _ = f.Close() }()
 
