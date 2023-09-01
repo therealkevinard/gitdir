@@ -8,8 +8,17 @@ tasks:
 
   cq:
     cmds:
+      - task: vet
       - task: lint
       - task: fmt
+
+  test:
+    desc: go test
+    cmd: go test ./...
+
+  vet:
+    desc: go vet
+    cmd: go vet ./...
 
   lint:
     desc: run lint tasks
