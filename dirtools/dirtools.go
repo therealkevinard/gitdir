@@ -3,7 +3,9 @@ package dirtools
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -52,4 +54,21 @@ func NormalizeRepoURL(repoURL string) (string, error) {
 	dir := path.Join(parsed.Host, strings.TrimSuffix(parsed.Path, ".git"))
 
 	return dir, nil
+}
+
+// FindGitDirs uses filepath.Walk to recursively identify git repos, returning the slice of git paths
+// repos are identified as `parent directory of a .git directory`.
+// TODO(perf): we can trust there are no useful .git dirs within a git repo. when we catch a .git, abandon that branch.
+func FindGitDirs(root string) ([]string, error) {
+	items := make([]string, 0)
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() && info.Name() == ".git" {
+			items = append(items, strings.TrimSuffix(path, "/.git"))
+		}
+
+		return nil
+	})
+
+	//nolint: wrapcheck
+	return items, err
 }

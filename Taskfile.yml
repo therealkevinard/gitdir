@@ -14,12 +14,15 @@ tasks:
   lint:
     desc: run lint tasks
     ignore_error: true
-    cmds:
-      - golangci-lint run --fix
+    cmd: golangci-lint run --fix
 
   fmt:
     desc: run formatting tasks
     ignore_error: true
-    cmds:
-      - gofumpt -w **/*.go
+    cmd: gofumpt -w **/*.go
+
+  install:
+    desc: install current pkg to gobin
+    cmd: go install .
+
 
