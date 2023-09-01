@@ -54,12 +54,9 @@ func (c *Command) Run() error {
 	// run the ui picker
 	c.ui()
 
-	// if user has a directory selection, write a cd script that can be sourced
-	// to cd from the shell itself.
-	if dir := c.selection; dir != "" {
-		if fileErr := c.writeCDToSelection(); fileErr != nil {
-			return fmt.Errorf("error creating cd script: %w", fileErr)
-		}
+	// write bash using selection
+	if fileErr := c.writeCDToSelection(); fileErr != nil {
+		return fmt.Errorf("error creating cd script: %w", fileErr)
 	}
 
 	return nil
@@ -89,12 +86,11 @@ func (c *Command) ui() {
 }
 
 func (c *Command) writeCDToSelection() error {
-	// write bash
-	script := fmt.Sprintf(`cd %s`, c.selection)
-	// prepare path
+	// prepare paths
 	cacheDir, _ := os.UserCacheDir()
 	scriptpath := path.Clean(path.Join(cacheDir, "gitdir", "gdnext.sh"))
-	// create script file and write
+
+	// create script
 	_ = os.MkdirAll(path.Dir(scriptpath), 0750) // TODO: check error
 	f, fileErr := os.Create(scriptpath)
 	if fileErr != nil {
@@ -103,7 +99,10 @@ func (c *Command) writeCDToSelection() error {
 	}
 	defer func() { _ = f.Close() }()
 
-	_, _ = f.WriteString(script)
+	// write file. no need to handle the no-selection case, as os.Create has truncated the file already
+	if c.selection != "" {
+		_, _ = f.WriteString(fmt.Sprintf(`cd %s`, c.selection))
+	}
 
 	return nil
 }
