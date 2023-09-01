@@ -9,12 +9,11 @@ package cd
 import (
 	"flag"
 	"fmt"
-	"os"
-	"path"
-
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/therealkevinard/gitdir/dirtools"
+	"os"
+	"path"
 )
 
 type Command struct {
@@ -58,20 +57,9 @@ func (c *Command) Run() error {
 	// if user has a directory selection, write a cd script that can be sourced
 	// to cd from the shell itself.
 	if dir := c.selection; dir != "" {
-		// write bash
-		script := fmt.Sprintf(`cd %s`, c.selection)
-		// prepare path
-		cacheDir, _ := os.UserCacheDir()
-		scriptpath := path.Join(cacheDir, "gitdir", "gdnext.sh")
-		// create script file and write
-		_ = os.MkdirAll(path.Dir(scriptpath), 0750) // TODO: check error
-		f, fileErr := os.Create(path.Join(cacheDir, "gitdirnextdir.sh"))
-		if fileErr != nil {
+		if fileErr := c.writeCDToSelection(); fileErr != nil {
 			return fmt.Errorf("error creating cd script: %w", fileErr)
 		}
-		defer func() { _ = f.Close() }()
-
-		_, _ = f.WriteString(script)
 	}
 
 	return nil
@@ -98,8 +86,24 @@ func (c *Command) ui() {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}
+}
 
-	if c.selection != "" {
-		_ = os.Chdir(c.selection)
+func (c *Command) writeCDToSelection() error {
+	// write bash
+	script := fmt.Sprintf(`cd %s`, c.selection)
+	// prepare path
+	cacheDir, _ := os.UserCacheDir()
+	scriptpath := path.Clean(path.Join(cacheDir, "gitdir", "gdnext.sh"))
+	// create script file and write
+	_ = os.MkdirAll(path.Dir(scriptpath), 0750) // TODO: check error
+	f, fileErr := os.Create(scriptpath)
+	if fileErr != nil {
+		return fileErr
+
 	}
+	defer func() { _ = f.Close() }()
+
+	_, _ = f.WriteString(script)
+
+	return nil
 }
