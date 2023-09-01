@@ -19,21 +19,21 @@ func main() {
 		log.Fatal("not enough arguments")
 	}
 
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
+
 	var cmd commands.Command
 
 	switch os.Args[1] {
 	case "clone":
-		cmd = clone.NewCommand()
+		cmd = clone.NewCommand(signals)
 
 	case "cd":
 		cmd = cd.NewCommand()
 
 	default:
-		cmd = clone.NewCommand()
+		cmd = clone.NewCommand(signals)
 	}
-
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 
 	go listenInterrupt(cmd, signals)
 	exec(cmd)

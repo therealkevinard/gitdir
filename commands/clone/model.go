@@ -6,6 +6,8 @@ import (
 	"github.com/therealkevinard/gitdir/ui/styles"
 )
 
+type statusTextUpdate string
+
 type model struct {
 	statusText string
 	spinner    spinner.Model
@@ -16,6 +18,12 @@ func (m *model) Init() tea.Cmd { return m.spinner.Tick }
 
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+
+	case tea.KeyMsg:
+		if msg.Type == tea.KeyCtrlC {
+			return m, tea.Quit
+		}
+
 	case statusTextUpdate:
 		m.statusText = string(msg)
 		if string(msg) == "finished" {
@@ -33,6 +41,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	default:
 		return m, nil
 	}
+
+	return m, nil
 }
 
 func (m *model) View() string {
