@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"github.com/therealkevinard/gitdir/ui/styles"
 	"log"
 	"os"
 
@@ -34,9 +36,13 @@ func main() {
 func exec(cmd commands.Command) {
 	// parse flags
 	cmd.Flags()
+	styles.Println(styles.OKLevel, "[%s] parsed flags", cmd.GetName())
 
 	// run it
 	if err := cmd.Run(); err != nil {
-		log.Fatalf("!! command %s execution exited with: %v", cmd.GetName(), err)
+		styles.Println(styles.FatalLevel, "[%s] execution exited with error: %v", cmd.GetName(), err)
+		fmt.Println("...")
 	}
+
+	styles.Println(styles.OKLevel, "[%s] finished", cmd.GetName())
 }

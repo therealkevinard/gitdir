@@ -2,12 +2,12 @@ package cd
 
 import (
 	"fmt"
-	"github.com/therealkevinard/gitdir/ui/styles"
 	"io"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/therealkevinard/gitdir/ui/styles"
 )
 
 type itemDelegate struct {

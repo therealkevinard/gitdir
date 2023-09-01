@@ -5,11 +5,11 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/therealkevinard/gitdir/dirtools"
+	"github.com/therealkevinard/gitdir/ui/styles"
 	"log"
 	"os"
 	"os/exec"
-
-	"github.com/therealkevinard/gitdir/dirtools"
 )
 
 type Command struct {
@@ -29,7 +29,12 @@ func (c *Command) Flags() {
 	flag.StringVar(&c.collectionRoot, "root", "$HOME/Workspaces", "path within home directory to root the clone tree under. supports environment expansion.")
 	flag.Parse()
 
+	// we have two cmds that lead here: `clone xxx` and `xxx`
+	// for the `clone xxx` case, strip clone
 	args := flag.Args()
+	if args[0] == "clone" {
+		args = args[1:]
+	}
 	if len(args) == 0 || args[0] == "" {
 		log.Fatal("repo url must be provided as only positional argument")
 	}
@@ -42,32 +47,42 @@ func (c *Command) Flags() {
 func (c *Command) Run() error {
 	subPath, err := dirtools.NormalizeRepoURL(c.repoURL)
 	if err != nil {
-		log.Fatalf("!! failed normalizing repo: %v", err)
+		styles.Println(styles.ErrorLevel, "failed normalizing repo: %v", err)
+		return err
 	}
 
 	// create clone directory
 	c.localDir = dirtools.CompileDirPath(c.collectionRoot, subPath)
 	if _, err = os.Stat(c.localDir); !errors.Is(err, os.ErrNotExist) {
-		fmt.Printf("!! directory exists. not re-creating %s\n", c.localDir)
-		log.Fatal("exiting")
+		err = os.ErrExist
+		styles.Println(styles.ErrorLevel, "not-recreating (%s): %v", c.localDir, err)
+		return err
 	}
 
-	fmt.Printf("> creating %s\n", c.localDir)
+	styles.Println(styles.OKLevel, "creating %s", c.localDir)
 	//nolint:gomnd
 	if err = os.MkdirAll(c.localDir, 0o750); err != nil {
-		log.Fatalf("!! error creating base directory: %v", err)
+		styles.Println(styles.ErrorLevel, "error creating base directory: %v", err)
+		return err
 	}
 
 	// clone operation
-	fmt.Printf("> cloning %s into %s\n", c.repoURL, c.localDir)
+	styles.Println(styles.OKLevel, "cloning %s into %s", c.repoURL, c.localDir)
 	out, err := c.cloneRepo()
 	if err != nil {
-		fmt.Printf("!! error cloning. leaving empty dir at %s\n", c.localDir)
+		styles.Println(styles.ErrorLevel, "error cloning. leaving empty dir at %s", c.localDir)
 		return err
 	}
 
 	// status output
-	fmt.Printf("> finished. git says: \n%s\n-------\n", out)
+	parts := []string{
+		styles.OKTextf("finished. git says:"),
+		styles.AltTextStyle.PaddingLeft(4).Render(string(out)),
+		styles.OKTextf("done here."),
+	}
+	for _, v := range parts {
+		fmt.Println(v)
+	}
 
 	return err
 }

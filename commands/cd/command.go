@@ -9,13 +9,13 @@ package cd
 import (
 	"flag"
 	"fmt"
-	"github.com/therealkevinard/gitdir/ui/styles"
 	"os"
 	"path"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/therealkevinard/gitdir/dirtools"
+	"github.com/therealkevinard/gitdir/ui/styles"
 )
 
 type Command struct {
