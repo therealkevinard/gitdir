@@ -9,6 +9,7 @@ package cd
 import (
 	"flag"
 	"fmt"
+	"github.com/therealkevinard/gitdir/ui/styles"
 	"os"
 	"path"
 
@@ -74,9 +75,9 @@ func (c *Command) ui() {
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(true)
 
-	l.Styles.Title = titleStyle
-	l.Styles.PaginationStyle = paginationStyle
-	l.Styles.HelpStyle = helpStyle
+	l.Styles.Title = styles.TitleStyle
+	l.Styles.PaginationStyle = styles.PaginationStyle
+	l.Styles.HelpStyle = styles.HelpStyle
 
 	m := &model{command: c, list: l, choice: "", quitting: false}
 

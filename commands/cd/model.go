@@ -3,6 +3,7 @@ package cd
 import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/therealkevinard/gitdir/ui/styles"
 )
 
 type stringListItem string
@@ -50,10 +51,10 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *model) View() string {
 	if m.choice != "" {
-		return quitTextStyle.Render("")
+		return styles.QuitTextStyle.Render("")
 	}
 	if m.quitting {
-		return quitTextStyle.Render("")
+		return styles.QuitTextStyle.Render("")
 	}
 
 	return "\n" + m.list.View()

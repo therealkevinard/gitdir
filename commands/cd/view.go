@@ -2,22 +2,12 @@ package cd
 
 import (
 	"fmt"
+	"github.com/therealkevinard/gitdir/ui/styles"
 	"io"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-)
-
-//nolint:gomnd,gochecknoglobals
-var (
-	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
-	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
-	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
-	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
-	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
-	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
 )
 
 type itemDelegate struct {
@@ -38,10 +28,10 @@ func (d itemDelegate) Render(writer io.Writer, model list.Model, index int, list
 	cleanstr := strings.TrimLeft(strings.TrimPrefix(string(i), d.stripPrefix), "/")
 	str := fmt.Sprintf("%d. %s", index+1, cleanstr)
 
-	fn := itemStyle.Render
+	fn := styles.ItemStyle.Render
 	if index == model.Index() {
 		fn = func(s ...string) string {
-			return selectedItemStyle.Render("> " + strings.Join(s, " "))
+			return styles.SelectedItemStyle.Render("> " + strings.Join(s, " "))
 		}
 	}
 
