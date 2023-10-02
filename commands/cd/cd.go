@@ -53,6 +53,10 @@ func (c *Command) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 		cdTo = scanner.Text()
 	}
 
+	if cdTo == "" {
+		return subcommands.ExitUsageError
+	}
+
 	// write bash using selection
 	if fileErr := c.writeCDToSelection(path.Join(c.CollectionRoot, cdTo)); fileErr != nil {
 		log.Printf("error creating cd script: %v", fileErr)
