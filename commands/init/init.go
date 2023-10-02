@@ -48,10 +48,12 @@ func (c *Command) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}
 	gdcdAlias := fmt.Sprintf("%s ls | fzf | %s cd - && source %s", selfCmd, selfCmd, ue.CDShellPath())
 
 	fmt.Printf(`
-# add for github.com/therealkevinard/gitdir: 
-# collection root 
-export GITDIR_COLLECTION_ROOT=$HOME/Workspaces
-# fzf alias for gitdir cd  
+#!/usr/bin/env bash
+# env var unset. setting
+[ -z "$GITDIR_COLLECTION_ROOT" ] && GITDIR_COLLECTION_ROOT="$HOME/Workspaces"
+# create root if not exist 
+[ -d "$GITDIR_COLLECTION_ROOT" ]  || mkdir -p "$GITDIR_COLLECTION_ROOT"
+# gitdir fzf alias 
 alias gdcd="%s"
 `, gdcdAlias)
 

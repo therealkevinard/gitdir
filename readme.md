@@ -3,10 +3,9 @@
 a tiny little tool for organizing local git repos - immensely inspired by the old $GOROOT. that's it 🤷‍♀️
 
 establishes a root directory that will hold git repos. within this root directory, repos are placed
-in a directory that mirrors the clone url. clone url is normalized to a stable directory path. 
+in a directory that mirrors the clone url. clone url is normalized to a stable directory path.
 
-
-## install
+## install 
 
 - install the binary
 
@@ -14,7 +13,10 @@ in a directory that mirrors the clone url. clone url is normalized to a stable d
 go install github.com/therealkevinard/gitdir@latest 
 ```
 
-- setup your env: `gitdir init` outputs some snippets that belong in your .profile file (an env var and an alias)
+- setup profile: add `source <(gitdir init)` to your .profile.  
+  this script sets the `$GITDIR_COLLECTION_ROOT` to default $HOME/Workspaces if it's unset, and creates the directory if
+  it doesn't exist.   
+  it also creates the fzf alias that makes `gitdir cd` pleasant. 
 
 ## subcommands
 
