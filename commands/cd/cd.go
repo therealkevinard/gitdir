@@ -36,12 +36,10 @@ type Command struct {
 	CollectionRoot string
 }
 
-func (c *Command) Name() string     { return name }
-func (c *Command) Synopsis() string { return synopsis }
-func (c *Command) Usage() string    { return usage }
-func (c *Command) SetFlags(set *flag.FlagSet) {
-	set.StringVar(&c.CollectionRoot, "root", "$HOME/Workspaces", "path within home directory to root the clone tree under. supports environment expansion.")
-}
+func (c *Command) Name() string             { return name }
+func (c *Command) Synopsis() string         { return synopsis }
+func (c *Command) Usage() string            { return usage }
+func (c *Command) SetFlags(_ *flag.FlagSet) {}
 
 func (c *Command) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	var cdTo string

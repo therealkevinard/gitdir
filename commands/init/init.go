@@ -23,12 +23,10 @@ type Command struct {
 	shell string
 }
 
-func (c *Command) Name() string     { return name }
-func (c *Command) Synopsis() string { return synopsis }
-func (c *Command) Usage() string    { return usage }
-func (c *Command) SetFlags(set *flag.FlagSet) {
-	set.StringVar(&c.shell, "shell", "", "path within home directory to root the clone tree under. supports environment expansion.")
-}
+func (c *Command) Name() string             { return name }
+func (c *Command) Synopsis() string         { return synopsis }
+func (c *Command) Usage() string            { return usage }
+func (c *Command) SetFlags(_ *flag.FlagSet) {}
 
 func (c *Command) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	selfCmd, ok := ctx.Value(context_keys.SelfNameCtx).(string)
@@ -47,6 +45,7 @@ func (c *Command) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}
 
 	gdcdAlias := fmt.Sprintf("%s ls | fzf | %s cd - && source %s", selfCmd, selfCmd, ue.CDShellPath())
 
+	//nolint
 	fmt.Printf(`
 #!/usr/bin/env bash
 # env var unset. setting
