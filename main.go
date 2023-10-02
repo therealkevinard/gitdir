@@ -3,20 +3,21 @@ package main
 import (
 	"context"
 	"flag"
-	initCmd "github.com/therealkevinard/gitdir/commands/init"
-	"github.com/therealkevinard/gitdir/commands/ls"
-	"github.com/therealkevinard/gitdir/commandtools"
-	context_keys "github.com/therealkevinard/gitdir/context-keys"
 	"os"
 	"path"
 
 	"github.com/google/subcommands"
 	"github.com/therealkevinard/gitdir/commands/cd"
 	"github.com/therealkevinard/gitdir/commands/clone"
+	initCmd "github.com/therealkevinard/gitdir/commands/init"
+	"github.com/therealkevinard/gitdir/commands/ls"
+	"github.com/therealkevinard/gitdir/commandtools"
+	context_keys "github.com/therealkevinard/gitdir/context-keys"
 )
 
 func main() {
 	ctx := prepareCommandContext()
+	root := commandtools.CheckRoot(ctx)
 
 	const supportGroup = "support"
 	subcommands.Register(subcommands.HelpCommand(), supportGroup)
@@ -25,11 +26,11 @@ func main() {
 	subcommands.Register(&initCmd.Command{}, supportGroup)
 
 	const mgtGroup = "repo management"
-	subcommands.Register(&clone.Command{}, mgtGroup)
+	subcommands.Register(&clone.Command{CollectionRoot: root}, mgtGroup)
 
 	const navGroup = "navigation"
-	subcommands.Register(&cd.Command{}, navGroup)
-	subcommands.Register(&ls.Command{}, navGroup)
+	subcommands.Register(&cd.Command{CollectionRoot: root}, navGroup)
+	subcommands.Register(&ls.Command{CollectionRoot: root}, navGroup)
 
 	flag.Parse()
 
@@ -38,7 +39,7 @@ func main() {
 }
 
 // prepareCommandContext initializes a context.Context for commands to run under.
-// the prepared context will hold global runtime keys
+// the prepared context will hold global runtime keys.
 func prepareCommandContext() context.Context {
 	ctx := context.Background()
 

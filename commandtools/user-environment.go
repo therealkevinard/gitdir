@@ -13,26 +13,23 @@ type UserEnvironment struct {
 }
 
 func InitUserEnvironment() *UserEnvironment {
-	ue := &UserEnvironment{}
-
 	// home dir
 	home, err := os.UserHomeDir()
 	if err != nil {
 		log.Fatal(err)
 	}
-	ue.userHomeDir = home
 
 	// cache dir
 	cache, err := os.UserCacheDir()
 	if err != nil {
 		log.Fatal(err)
 	}
-	ue.userCacheDir = cache
 
-	// cd script
-	ue.gdNextFilepath = path.Join(cache, "gitdir", "gdnext.sh")
-
-	return ue
+	return &UserEnvironment{
+		userHomeDir:    home,
+		userCacheDir:   cache,
+		gdNextFilepath: path.Join(cache, "gitdir", "gdnext.sh"),
+	}
 }
 
 func (ue *UserEnvironment) Home() string        { return ue.userHomeDir }

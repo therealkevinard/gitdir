@@ -9,16 +9,15 @@ package cd
 import (
 	"bufio"
 	"context"
-	"errors"
 	"flag"
 	"fmt"
-	"github.com/therealkevinard/gitdir/commandtools"
 	"log"
 	"os"
 	"path"
 	"strings"
 
 	"github.com/google/subcommands"
+	"github.com/therealkevinard/gitdir/commandtools"
 )
 
 const (
@@ -34,23 +33,21 @@ it's important to source this script afterward to exec the actual cd.
 )
 
 type Command struct {
-	collectionRoot string
+	CollectionRoot string
 }
 
 func (c *Command) Name() string     { return name }
 func (c *Command) Synopsis() string { return synopsis }
 func (c *Command) Usage() string    { return usage }
 func (c *Command) SetFlags(set *flag.FlagSet) {
-	set.StringVar(&c.collectionRoot, "root", "$HOME/Workspaces", "path within home directory to root the clone tree under. supports environment expansion.")
+	set.StringVar(&c.CollectionRoot, "root", "$HOME/Workspaces", "path within home directory to root the clone tree under. supports environment expansion.")
 }
 
-func (c *Command) Execute(ctx context.Context, f *flag.FlagSet, args ...interface{}) subcommands.ExitStatus {
+func (c *Command) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	var cdTo string
 	if f.NArg() != 1 || f.Arg(0) != "-" {
 		return subcommands.ExitUsageError
 	}
-
-	c.collectionRoot = commandtools.CheckRoot(c.collectionRoot)
 
 	// read path from stdin
 	scanner := bufio.NewScanner(os.Stdin)
@@ -59,7 +56,7 @@ func (c *Command) Execute(ctx context.Context, f *flag.FlagSet, args ...interfac
 	}
 
 	// write bash using selection
-	if fileErr := c.writeCDToSelection(path.Join(c.collectionRoot, cdTo)); fileErr != nil {
+	if fileErr := c.writeCDToSelection(path.Join(c.CollectionRoot, cdTo)); fileErr != nil {
 		log.Printf("error creating cd script: %v", fileErr)
 		return subcommands.ExitFailure
 	}
@@ -69,12 +66,12 @@ func (c *Command) Execute(ctx context.Context, f *flag.FlagSet, args ...interfac
 
 func (c *Command) writeCDToSelection(cdTo string) error {
 	if cdTo == "" {
-		return errors.New("invalid argument")
+		return commandtools.ErrInvalidDirectory
 	}
 
-	// prepare cd-path. prepend the collectionRoot if needed
-	if !strings.HasPrefix(cdTo, c.collectionRoot) {
-		cdTo = path.Clean(path.Join(c.collectionRoot, cdTo))
+	// prepare cd-path. prepend the CollectionRoot if needed
+	if !strings.HasPrefix(cdTo, c.CollectionRoot) {
+		cdTo = path.Clean(path.Join(c.CollectionRoot, cdTo))
 	}
 
 	// prepare write-path
@@ -82,6 +79,7 @@ func (c *Command) writeCDToSelection(cdTo string) error {
 	scriptpath := path.Clean(path.Join(cacheDir, "gitdir", "gdnext.sh"))
 
 	// create script
+	//nolint:gomnd
 	_ = os.MkdirAll(path.Dir(scriptpath), 0o750) // TODO: check error
 	f, fileErr := os.Create(scriptpath)
 	if fileErr != nil {

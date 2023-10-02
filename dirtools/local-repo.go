@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// LocalRepoPath represents a directory path string with or without a common prefix stripped
+// LocalRepoPath represents a directory path string with or without a common prefix stripped.
 type LocalRepoPath struct {
 	full  string
 	short string
@@ -18,13 +18,13 @@ func NewLocalRepoPath(root, full string) *LocalRepoPath {
 	}
 }
 
-// Short returns the dir path with common prefix trimmed
+// Short returns the dir path with common prefix trimmed.
 func (rp *LocalRepoPath) Short() string { return rp.short }
 
-// Long returns the full, unmodified directory path
+// Long returns the full, unmodified directory path.
 func (rp *LocalRepoPath) Long() string { return rp.full }
 
-// RepoList is a string-indexed map of *LocalRepoPath
+// RepoList is a string-indexed map of *LocalRepoPath.
 type RepoList map[string]*LocalRepoPath
 
 func NewRepoList(root string, paths []string) RepoList {
@@ -36,7 +36,7 @@ func NewRepoList(root string, paths []string) RepoList {
 	return list
 }
 
-// Keys returns a sorted list of the map keys
+// Keys returns a sorted list of the map keys.
 func (rl RepoList) Keys() []string {
 	idx := make([]string, 0, len(rl))
 	for k := range rl {

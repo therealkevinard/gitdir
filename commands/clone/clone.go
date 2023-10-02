@@ -6,7 +6,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/therealkevinard/gitdir/commandtools"
 	"log"
 	"os"
 	"os/exec"
@@ -22,12 +21,12 @@ const (
 gitdir clone $REPO_URL 
 clones $REPO_URL into a directory that mirrors the repo url. 
 
-ssh urls, http auth, and many other nuances are normalized to a stable path withing your collection root
+ssh urls, http auth, and many other nuances are normalized to a stable path within your collection root
 `
 )
 
 type Command struct {
-	collectionRoot string
+	CollectionRoot string
 	repoURL        string
 	localDir       string
 }
@@ -36,7 +35,7 @@ func (c *Command) Name() string     { return name }
 func (c *Command) Synopsis() string { return synopsis }
 func (c *Command) Usage() string    { return usage }
 func (c *Command) SetFlags(set *flag.FlagSet) {
-	set.StringVar(&c.collectionRoot, "root", "$HOME/Workspaces", "path within home directory to root the clone tree under. supports environment expansion.")
+	set.StringVar(&c.CollectionRoot, "root", "$HOME/Workspaces", "path within home directory to root the clone tree under. supports environment expansion.")
 }
 
 func (c *Command) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
@@ -45,8 +44,6 @@ func (c *Command) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 		log.Println("repo url must be provided as only positional argument")
 		return subcommands.ExitUsageError
 	}
-
-	c.collectionRoot = commandtools.CheckRoot(c.collectionRoot)
 	c.repoURL = f.Arg(0)
 
 	subPath, err := dirtools.NormalizeRepoURL(c.repoURL)
@@ -56,7 +53,7 @@ func (c *Command) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 	}
 
 	// create clone directory
-	c.localDir = dirtools.CompileDirPath(c.collectionRoot, subPath)
+	c.localDir = dirtools.CompileDirPath(c.CollectionRoot, subPath)
 	if _, err = os.Stat(c.localDir); !errors.Is(err, os.ErrNotExist) {
 		fmt.Printf("!! directory exists. not re-creating %s\n", c.localDir)
 		return subcommands.ExitFailure
@@ -89,6 +86,7 @@ func (c *Command) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 func (c *Command) cloneRepo() ([]byte, error) {
 	var out bytes.Buffer
 
+	//nolint:gosec
 	cmd := exec.Command("git", "clone", c.repoURL, c.localDir)
 	cmd.Stdout = &out
 	cmd.Stderr = &out

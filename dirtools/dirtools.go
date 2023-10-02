@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/therealkevinard/gitdir/commandtools"
 )
 
 // regexes.
@@ -47,7 +49,7 @@ func NormalizeRepoURL(repoURL string) (string, error) {
 		return "", fmt.Errorf("error parsing url: %w", err)
 	}
 	if parsed.Host == "" || parsed.Path == "" {
-		return "", fmt.Errorf("invalid url: %s (sanitized to %s)", repoURL, cleanRepoURL)
+		return "", fmt.Errorf("invalid url %s (sanitized to %s): %w", repoURL, cleanRepoURL, commandtools.ErrInvalidURL)
 	}
 
 	// build final directory
