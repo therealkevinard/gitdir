@@ -2,14 +2,28 @@ package clone
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/therealkevinard/gitdir/commandtools"
 	"log"
 	"os"
 	"os/exec"
 
+	"github.com/google/subcommands"
 	"github.com/therealkevinard/gitdir/dirtools"
+)
+
+const (
+	name     = "clone"
+	synopsis = "clone a remote repo url"
+	usage    = `
+gitdir clone $REPO_URL 
+clones $REPO_URL into a directory that mirrors the repo url. 
+
+ssh urls, http auth, and many other nuances are normalized to a stable path withing your collection root
+`
 )
 
 type Command struct {
@@ -18,44 +32,41 @@ type Command struct {
 	localDir       string
 }
 
-func NewCommand() *Command {
-	//nolint: exhaustruct
-	return &Command{}
+func (c *Command) Name() string     { return name }
+func (c *Command) Synopsis() string { return synopsis }
+func (c *Command) Usage() string    { return usage }
+func (c *Command) SetFlags(set *flag.FlagSet) {
+	set.StringVar(&c.collectionRoot, "root", "$HOME/Workspaces", "path within home directory to root the clone tree under. supports environment expansion.")
 }
 
-func (c *Command) GetName() string { return "clone" }
-
-func (c *Command) Flags() {
-	flag.StringVar(&c.collectionRoot, "root", "$HOME/Workspaces", "path within home directory to root the clone tree under. supports environment expansion.")
-	flag.Parse()
-
-	args := flag.Args()
-	if len(args) == 0 || args[0] == "" {
-		log.Fatal("repo url must be provided as only positional argument")
+func (c *Command) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
+	// check args
+	if f.Arg(0) == "" {
+		log.Println("repo url must be provided as only positional argument")
+		return subcommands.ExitUsageError
 	}
-	c.repoURL = args[0]
-	c.collectionRoot = os.ExpandEnv(c.collectionRoot)
-}
 
-// Run wraps a complete execution, cloning repoURL under root
-// it has little internal logic - mostly just composing other work with terminal output.
-func (c *Command) Run() error {
+	c.collectionRoot = commandtools.CheckRoot(c.collectionRoot)
+	c.repoURL = f.Arg(0)
+
 	subPath, err := dirtools.NormalizeRepoURL(c.repoURL)
 	if err != nil {
-		log.Fatalf("!! failed normalizing repo: %v", err)
+		fmt.Printf("!! failed normalizing repo: %v", err)
+		return subcommands.ExitFailure
 	}
 
 	// create clone directory
 	c.localDir = dirtools.CompileDirPath(c.collectionRoot, subPath)
 	if _, err = os.Stat(c.localDir); !errors.Is(err, os.ErrNotExist) {
 		fmt.Printf("!! directory exists. not re-creating %s\n", c.localDir)
-		log.Fatal("exiting")
+		return subcommands.ExitFailure
 	}
 
 	fmt.Printf("> creating %s\n", c.localDir)
 	//nolint:gomnd
 	if err = os.MkdirAll(c.localDir, 0o750); err != nil {
-		log.Fatalf("!! error creating base directory: %v", err)
+		fmt.Printf("!! error creating base directory: %v", err)
+		return subcommands.ExitFailure
 	}
 
 	// clone operation
@@ -63,13 +74,13 @@ func (c *Command) Run() error {
 	out, err := c.cloneRepo()
 	if err != nil {
 		fmt.Printf("!! error cloning. leaving empty dir at %s\n", c.localDir)
-		return err
+		return subcommands.ExitFailure
 	}
 
 	// status output
 	fmt.Printf("> finished. git says: \n%s\n-------\n", out)
 
-	return err
+	return subcommands.ExitSuccess
 }
 
 // cloneRepo runs git clone command in localDir.

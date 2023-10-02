@@ -1,41 +1,58 @@
 package main
 
 import (
-	"log"
+	"context"
+	"flag"
+	initCmd "github.com/therealkevinard/gitdir/commands/init"
+	"github.com/therealkevinard/gitdir/commands/ls"
+	"github.com/therealkevinard/gitdir/commandtools"
+	context_keys "github.com/therealkevinard/gitdir/context-keys"
 	"os"
+	"path"
 
-	"github.com/therealkevinard/gitdir/commands"
+	"github.com/google/subcommands"
 	"github.com/therealkevinard/gitdir/commands/cd"
 	"github.com/therealkevinard/gitdir/commands/clone"
 )
 
 func main() {
-	if len(os.Args) == 0 {
-		return
-	}
+	ctx := prepareCommandContext()
 
-	var cmd commands.Command
+	const supportGroup = "support"
+	subcommands.Register(subcommands.HelpCommand(), supportGroup)
+	subcommands.Register(subcommands.FlagsCommand(), supportGroup)
+	subcommands.Register(subcommands.CommandsCommand(), supportGroup)
+	subcommands.Register(&initCmd.Command{}, supportGroup)
 
-	switch os.Args[1] {
-	case "clone":
-		cmd = clone.NewCommand()
+	const mgtGroup = "repo management"
+	subcommands.Register(&clone.Command{}, mgtGroup)
 
-	case "cd":
-		cmd = cd.NewCommand()
+	const navGroup = "navigation"
+	subcommands.Register(&cd.Command{}, navGroup)
+	subcommands.Register(&ls.Command{}, navGroup)
 
-	default:
-		cmd = clone.NewCommand()
-	}
+	flag.Parse()
 
-	exec(cmd)
+	code := subcommands.Execute(ctx)
+	os.Exit(int(code))
 }
 
-func exec(cmd commands.Command) {
-	// parse flags
-	cmd.Flags()
+// prepareCommandContext initializes a context.Context for commands to run under.
+// the prepared context will hold global runtime keys
+func prepareCommandContext() context.Context {
+	ctx := context.Background()
 
-	// run it
-	if err := cmd.Run(); err != nil {
-		log.Fatalf("!! command %s execution exited with: %v", cmd.GetName(), err)
-	}
+	// command name, as installed/called
+	_, selfCmd := path.Split(os.Args[0])
+	ctx = context.WithValue(ctx, context_keys.SelfNameCtx, selfCmd)
+
+	// collection root from env var
+	collRoot := os.Getenv("GITDIR_COLLECTION_ROOT")
+	ctx = context.WithValue(ctx, context_keys.CollRootCtx, collRoot)
+
+	//
+	userEnv := commandtools.InitUserEnvironment()
+	ctx = context.WithValue(ctx, context_keys.UserEnvCtx, userEnv)
+
+	return ctx
 }
