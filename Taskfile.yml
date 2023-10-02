@@ -25,4 +25,8 @@ tasks:
     desc: install current pkg to gobin
     cmd: go install .
 
+  # helpful for testing .profile without affecting host env
+  docker:
+    desc: mount workspace into docker image.
+    cmd: docker run --rm -it -v $PWD:/go/src -w /go/src --entrypoint bash golang:1.21-bullseye
 
