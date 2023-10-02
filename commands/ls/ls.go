@@ -13,7 +13,13 @@ import (
 const (
 	name     = "ls"
 	synopsis = "list local repositories"
-	usage    = "usage here"
+	usage    = `
+gitdir ls 
+provides a list of local repositories housed under your collection root 
+
+walks the directory tree starting at collection root, listing-out all git repos. 
+plays well with fzf.
+`
 )
 
 type Command struct {

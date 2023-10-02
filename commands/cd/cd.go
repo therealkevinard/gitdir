@@ -1,5 +1,5 @@
 // Package cd holds the command for changing directories to a git repo.
-// it indexes all repos under root, presents a bubbletea list ui, and writes a cd script for that dir that
+// it reads a target path from stdin and writes a cd script for that dir that
 // can be sourced to cd the outer shell to the chosen dir.
 //
 // since binaries run as a subprocess, this needs an alias like `xxx='gitdir cd && source script.sh'
@@ -16,6 +16,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/google/subcommands"
 )
@@ -25,6 +26,8 @@ const (
 	synopsis = "root-aware cd. move into a local gitdir directory"
 	usage    = `
 gitdir cd - 
+cd to directory within your collection root.
+
 reads target directory from stdin, prefixes your root, and writes a cd script to ~/Caches/gitdir/gdnext.sh 
 it's important to source this script afterward to exec the actual cd. 
 `
@@ -49,6 +52,7 @@ func (c *Command) Execute(ctx context.Context, f *flag.FlagSet, args ...interfac
 
 	c.collectionRoot = commandtools.CheckRoot(c.collectionRoot)
 
+	// read path from stdin
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		cdTo = scanner.Text()
@@ -68,7 +72,12 @@ func (c *Command) writeCDToSelection(cdTo string) error {
 		return errors.New("invalid argument")
 	}
 
-	// prepare paths
+	// prepare cd-path. prepend the collectionRoot if needed
+	if !strings.HasPrefix(cdTo, c.collectionRoot) {
+		cdTo = path.Clean(path.Join(c.collectionRoot, cdTo))
+	}
+
+	// prepare write-path
 	cacheDir, _ := os.UserCacheDir()
 	scriptpath := path.Clean(path.Join(cacheDir, "gitdir", "gdnext.sh"))
 

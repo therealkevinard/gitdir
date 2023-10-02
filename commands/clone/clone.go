@@ -18,7 +18,12 @@ import (
 const (
 	name     = "clone"
 	synopsis = "clone a remote repo url"
-	usage    = "usage here"
+	usage    = `
+gitdir clone $REPO_URL 
+clones $REPO_URL into a directory that mirrors the repo url. 
+
+ssh urls, http auth, and many other nuances are normalized to a stable path withing your collection root
+`
 )
 
 type Command struct {
