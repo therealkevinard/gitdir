@@ -6,6 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/therealkevinard/gitdir/commandtools"
 	"log"
 	"os"
 	"os/exec"
@@ -30,12 +31,7 @@ func (c *Command) Name() string     { return name }
 func (c *Command) Synopsis() string { return synopsis }
 func (c *Command) Usage() string    { return usage }
 func (c *Command) SetFlags(set *flag.FlagSet) {
-	set.StringVar(
-		&c.collectionRoot,
-		"root",
-		"$HOME/Workspaces",
-		"path within home directory to root the clone tree under. supports environment expansion.",
-	)
+	set.StringVar(&c.collectionRoot, "root", "$HOME/Workspaces", "path within home directory to root the clone tree under. supports environment expansion.")
 }
 
 func (c *Command) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
@@ -45,12 +41,7 @@ func (c *Command) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 		return subcommands.ExitUsageError
 	}
 
-	// TODO: flag defaults are mishandled here. this belongs in main.go, and should be passed to the command constructor
-	if c.collectionRoot == "" {
-		c.collectionRoot = "$HOME/Workspaces"
-	}
-	c.collectionRoot = os.ExpandEnv(c.collectionRoot)
-
+	c.collectionRoot = commandtools.CheckRoot(c.collectionRoot)
 	c.repoURL = f.Arg(0)
 
 	subPath, err := dirtools.NormalizeRepoURL(c.repoURL)

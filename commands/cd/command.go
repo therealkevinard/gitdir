@@ -10,6 +10,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/therealkevinard/gitdir/commandtools"
 	"log"
 	"os"
 	"path"
@@ -40,10 +41,7 @@ func (c *Command) SetFlags(set *flag.FlagSet) {
 }
 
 func (c *Command) Execute(ctx context.Context, f *flag.FlagSet, args ...interface{}) subcommands.ExitStatus {
-	if c.collectionRoot == "" {
-		c.collectionRoot = "$HOME/Workspaces"
-	}
-	c.collectionRoot = os.ExpandEnv(c.collectionRoot)
+	c.collectionRoot = commandtools.CheckRoot(c.collectionRoot)
 
 	// build model items from git dirs
 	gitDirs, err := dirtools.FindGitDirs(c.collectionRoot)
