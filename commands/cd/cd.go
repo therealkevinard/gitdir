@@ -12,13 +12,13 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/therealkevinard/gitdir/commandtools"
 	"log"
 	"os"
 	"path"
 	"strings"
 
 	"github.com/google/subcommands"
+	"github.com/therealkevinard/gitdir/commandtools"
 )
 
 const (

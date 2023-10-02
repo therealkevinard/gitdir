@@ -6,12 +6,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/therealkevinard/gitdir/commandtools"
 	"log"
 	"os"
 	"os/exec"
 
 	"github.com/google/subcommands"
+	"github.com/therealkevinard/gitdir/commandtools"
 	"github.com/therealkevinard/gitdir/dirtools"
 )
 
@@ -22,7 +22,7 @@ const (
 gitdir clone $REPO_URL 
 clones $REPO_URL into a directory that mirrors the repo url. 
 
-ssh urls, http auth, and many other nuances are normalized to a stable path withing your collection root
+ssh urls, http auth, and many other nuances are normalized to a stable path within your collection root
 `
 )
 

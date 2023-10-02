@@ -4,10 +4,11 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
+
 	"github.com/google/subcommands"
 	"github.com/therealkevinard/gitdir/commandtools"
 	"github.com/therealkevinard/gitdir/dirtools"
-	"log"
 )
 
 const (

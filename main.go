@@ -3,16 +3,15 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/google/subcommands"
+	"github.com/therealkevinard/gitdir/commands/cd"
+	"github.com/therealkevinard/gitdir/commands/clone"
 	initCmd "github.com/therealkevinard/gitdir/commands/init"
 	"github.com/therealkevinard/gitdir/commands/ls"
 	"github.com/therealkevinard/gitdir/commandtools"
 	context_keys "github.com/therealkevinard/gitdir/context-keys"
 	"os"
 	"path"
-
-	"github.com/google/subcommands"
-	"github.com/therealkevinard/gitdir/commands/cd"
-	"github.com/therealkevinard/gitdir/commands/clone"
 )
 
 func main() {
@@ -38,7 +37,7 @@ func main() {
 }
 
 // prepareCommandContext initializes a context.Context for commands to run under.
-// the prepared context will hold global runtime keys
+// the prepared context will hold global runtime keys.
 func prepareCommandContext() context.Context {
 	ctx := context.Background()
 
