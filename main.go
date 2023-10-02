@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"flag"
+	"os"
+	"path"
+
 	"github.com/google/subcommands"
 	"github.com/therealkevinard/gitdir/commands/cd"
 	"github.com/therealkevinard/gitdir/commands/clone"
@@ -10,12 +13,11 @@ import (
 	"github.com/therealkevinard/gitdir/commands/ls"
 	"github.com/therealkevinard/gitdir/commandtools"
 	context_keys "github.com/therealkevinard/gitdir/context-keys"
-	"os"
-	"path"
 )
 
 func main() {
 	ctx := prepareCommandContext()
+	root := commandtools.CheckRoot(ctx)
 
 	const supportGroup = "support"
 	subcommands.Register(subcommands.HelpCommand(), supportGroup)
@@ -24,11 +26,11 @@ func main() {
 	subcommands.Register(&initCmd.Command{}, supportGroup)
 
 	const mgtGroup = "repo management"
-	subcommands.Register(&clone.Command{}, mgtGroup)
+	subcommands.Register(&clone.Command{CollectionRoot: root}, mgtGroup)
 
 	const navGroup = "navigation"
-	subcommands.Register(&cd.Command{}, navGroup)
-	subcommands.Register(&ls.Command{}, navGroup)
+	subcommands.Register(&cd.Command{CollectionRoot: root}, navGroup)
+	subcommands.Register(&ls.Command{CollectionRoot: root}, navGroup)
 
 	flag.Parse()
 

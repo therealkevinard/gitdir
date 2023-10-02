@@ -17,9 +17,10 @@ issues:
   # @self: issues.new: true only checks vcs-changed files. nice, but will break general linting
   new: false # true
   exclude-rules:
-    - linters:
-        - revive
-      text: "var-naming: don't use an underscore in package name"
+    - text: "Line contains TODO/BUG/FIXME"
+      linters: [ godox ]
+    - text: "var-naming: don't use an underscore in package name"
+      linters: [ revive ]
 
 linters:
   presets:
@@ -40,8 +41,8 @@ linters:
     - exportloopref
   disable:
     # -- temp disable
-#    - nolintlint  # this one should really be a periodic backsweep for nolint plaque
-#    - dupl        # these can be resolved in a later refactor
+    #    - nolintlint  # this one should really be a periodic backsweep for nolint plaque
+    #    - dupl        # these can be resolved in a later refactor
     - depguard
     - wsl
     - forbidigo
