@@ -7,7 +7,9 @@
 package cd
 
 import (
+	"bufio"
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/therealkevinard/gitdir/commandtools"
@@ -15,22 +17,21 @@ import (
 	"os"
 	"path"
 
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/google/subcommands"
-	"github.com/therealkevinard/gitdir/dirtools"
 )
 
 const (
 	name     = "cd"
-	synopsis = "cd into a local gitdir directory"
-	usage    = "usage here"
+	synopsis = "root-aware cd. move into a local gitdir directory"
+	usage    = `
+gitdir cd - 
+reads target directory from stdin, prefixes your root, and writes a cd script to ~/Caches/gitdir/gdnext.sh 
+it's important to source this script afterward to exec the actual cd. 
+`
 )
 
 type Command struct {
 	collectionRoot string
-	selection      string
-	items          []list.Item
 }
 
 func (c *Command) Name() string     { return name }
@@ -41,28 +42,20 @@ func (c *Command) SetFlags(set *flag.FlagSet) {
 }
 
 func (c *Command) Execute(ctx context.Context, f *flag.FlagSet, args ...interface{}) subcommands.ExitStatus {
+	var cdTo string
+	if f.NArg() != 1 || f.Arg(0) != "-" {
+		return subcommands.ExitUsageError
+	}
+
 	c.collectionRoot = commandtools.CheckRoot(c.collectionRoot)
 
-	// build model items from git dirs
-	gitDirs, err := dirtools.FindGitDirs(c.collectionRoot)
-	if err != nil {
-		log.Printf("error finding git dirItems: %v", err)
-		return subcommands.ExitFailure
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		cdTo = scanner.Text()
 	}
-
-	c.items = make([]list.Item, len(gitDirs))
-	for i, dir := range gitDirs {
-		c.items[i] = stringListItem(dir)
-	}
-
-	// clear selection
-	c.selection = ""
-
-	// run the ui picker
-	c.ui()
 
 	// write bash using selection
-	if fileErr := c.writeCDToSelection(); fileErr != nil {
+	if fileErr := c.writeCDToSelection(path.Join(c.collectionRoot, cdTo)); fileErr != nil {
 		log.Printf("error creating cd script: %v", fileErr)
 		return subcommands.ExitFailure
 	}
@@ -70,30 +63,11 @@ func (c *Command) Execute(ctx context.Context, f *flag.FlagSet, args ...interfac
 	return subcommands.ExitSuccess
 }
 
-func (c *Command) ui() {
-	const (
-		defaultWidth = 20
-		listHeight   = 14
-	)
-
-	l := list.New(c.items, itemDelegate{stripPrefix: c.collectionRoot}, defaultWidth, listHeight)
-	l.Title = "found these repositories in your collection"
-	l.SetShowStatusBar(false)
-	l.SetFilteringEnabled(true)
-
-	l.Styles.Title = titleStyle
-	l.Styles.PaginationStyle = paginationStyle
-	l.Styles.HelpStyle = helpStyle
-
-	m := &model{command: c, list: l, choice: "", quitting: false}
-
-	if _, err := tea.NewProgram(m).Run(); err != nil {
-		fmt.Println("Error running program:", err)
-		os.Exit(1)
+func (c *Command) writeCDToSelection(cdTo string) error {
+	if cdTo == "" {
+		return errors.New("invalid argument")
 	}
-}
 
-func (c *Command) writeCDToSelection() error {
 	// prepare paths
 	cacheDir, _ := os.UserCacheDir()
 	scriptpath := path.Clean(path.Join(cacheDir, "gitdir", "gdnext.sh"))
@@ -107,9 +81,7 @@ func (c *Command) writeCDToSelection() error {
 	defer func() { _ = f.Close() }()
 
 	// write file. no need to handle the no-selection case, as os.Create has truncated the file already
-	if c.selection != "" {
-		_, _ = f.WriteString(fmt.Sprintf(`cd %s`, c.selection))
-	}
+	_, _ = f.WriteString(fmt.Sprintf(`cd %s`, cdTo))
 
 	return nil
 }

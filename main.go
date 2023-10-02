@@ -24,6 +24,7 @@ func main() {
 	subcommands.Register(&ls.Command{}, navGroup)
 
 	flag.Parse()
+
 	ctx := context.Background()
 	code := subcommands.Execute(ctx)
 	os.Exit(int(code))
