@@ -29,15 +29,17 @@ func (c *Command) SetFlags(set *flag.FlagSet) {
 
 func (c *Command) Execute(ctx context.Context, f *flag.FlagSet, args ...interface{}) subcommands.ExitStatus {
 	c.collectionRoot = commandtools.CheckRoot(c.collectionRoot)
+
 	dirs, err := dirtools.FindGitDirs(c.collectionRoot)
 	if err != nil {
 		log.Printf("error finding git dirItems: %v", err)
 		return subcommands.ExitFailure
 	}
-	_ = dirs
 
-	for i := range dirs {
-		fmt.Println(dirs[i])
+	list := dirtools.NewRepoList(c.collectionRoot, dirs)
+
+	for _, k := range list.Keys() {
+		fmt.Println(list[k].Short())
 	}
 
 	return subcommands.ExitSuccess
