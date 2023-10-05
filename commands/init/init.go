@@ -19,9 +19,7 @@ source this into your shell's .profile to prepare environment, collection root, 
 `
 )
 
-type Command struct {
-	shell string
-}
+type Command struct{}
 
 func (c *Command) Name() string             { return name }
 func (c *Command) Synopsis() string         { return synopsis }

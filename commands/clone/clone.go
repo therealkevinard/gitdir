@@ -6,11 +6,11 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/therealkevinard/gitdir/commands"
 	"os"
 	"os/exec"
 
 	"github.com/google/subcommands"
+	"github.com/therealkevinard/gitdir/commands"
 	"github.com/therealkevinard/gitdir/dirtools"
 )
 
@@ -75,6 +75,7 @@ func (c *Command) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 
 	// status output
 	commands.Notify(commands.NotifyDone, fmt.Sprintf("finished. git says: \n%s", out))
+
 	return subcommands.ExitSuccess
 }
 

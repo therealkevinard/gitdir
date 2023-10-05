@@ -30,6 +30,7 @@ type lineConfig struct {
 	color     *color.Color
 }
 
+//nolint:gochecknoglobals
 var decoratorMap = map[NotifyKind]lineConfig{
 	NotifyCreate: {
 		decorator: sparkleDecorator,
