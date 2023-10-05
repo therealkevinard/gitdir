@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"github.com/google/subcommands"
 	"github.com/therealkevinard/gitdir/commands"
+	"net/url"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 const (
@@ -31,21 +33,47 @@ func (c *Command) SetFlags(_ *flag.FlagSet) {}
 func (c *Command) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	var openpath string
 
-	if p := f.Arg(0); p == "-" {
+	switch f.Arg(0) {
+	case "-":
 		// read path from stdin
 		scanner := bufio.NewScanner(os.Stdin)
 		for scanner.Scan() {
 			openpath = scanner.Text()
 		}
-	} else {
-		openpath = p
+
+	case ".":
+		// use $PWD
+		dir, err := os.Getwd()
+		if err != nil {
+			commands.Notify(commands.NotifyError, fmt.Sprintf("error getting dot-path: %v", err))
+			return subcommands.ExitFailure
+		}
+		openpath = dir
+
+	default:
+		// use scalar value
+		openpath = f.Arg(0)
 	}
 
 	if openpath == "" {
+		commands.Notify(commands.NotifyError, fmt.Sprintf("no valid path provided"))
 		return subcommands.ExitUsageError
 	}
 
-	cmd := exec.Command("open", "https://"+openpath)
+	if strings.HasPrefix(openpath, c.CollectionRoot) {
+		openpath = strings.TrimPrefix(openpath, c.CollectionRoot)
+		openpath = strings.TrimPrefix(openpath, "/") // TODO: this is all so gross. make a better string cleaner one day.
+	}
+
+	dest, err := url.Parse("https://" + openpath)
+	if err != nil {
+		commands.Notify(commands.NotifyError, fmt.Sprintf("error parsing %s as url: %v", "https://"+openpath, err))
+		return subcommands.ExitFailure
+	}
+
+	commands.Notify(commands.NotifyInfo, fmt.Sprintf("opening %s", dest.String()))
+
+	cmd := exec.Command("open", dest.String())
 	if runErr := cmd.Run(); runErr != nil {
 		commands.Notify(commands.NotifyError, fmt.Sprintf("error opening web url: %v", runErr))
 		return subcommands.ExitFailure
