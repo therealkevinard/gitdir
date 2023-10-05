@@ -42,6 +42,7 @@ func (c *Command) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}
 	}
 
 	gdcdAlias := fmt.Sprintf("%s ls | fzf | %s cd - && source %s", selfCmd, selfCmd, ue.CDShellPath())
+	gdopenAlias := fmt.Sprintf("%s ls | fzf | %s open -", selfCmd, selfCmd)
 
 	//nolint
 	fmt.Printf(`
@@ -50,9 +51,10 @@ func (c *Command) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}
 [ -z "$GITDIR_COLLECTION_ROOT" ] && GITDIR_COLLECTION_ROOT="$HOME/Workspaces"
 # create root if not exist 
 [ -d "$GITDIR_COLLECTION_ROOT" ]  || mkdir -p "$GITDIR_COLLECTION_ROOT"
-# gitdir fzf alias 
+# gitdir fzf aliases 
 alias gdcd="%s"
-`, gdcdAlias)
+alias gdopen="%s"
+`, gdcdAlias, gdopenAlias)
 
 	return subcommands.ExitSuccess
 }
