@@ -13,15 +13,13 @@ import (
 
 const (
 	name     = "init"
-	synopsis = "initialize global application config"
+	synopsis = "initializes shell env"
 	usage    = `
-TODO... 
+source this into your shell's .profile to prepare environment, collection root, and add cd support
 `
 )
 
-type Command struct {
-	shell string
-}
+type Command struct{}
 
 func (c *Command) Name() string             { return name }
 func (c *Command) Synopsis() string         { return synopsis }

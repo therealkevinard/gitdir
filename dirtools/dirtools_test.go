@@ -7,7 +7,7 @@ import (
 )
 
 func Test_NormalizeRepoURL(t *testing.T) {
-	errInvalidURLText := "invalid url:"
+	errInvalidURLText := "invalid url "
 
 	tests := []struct {
 		name        string
