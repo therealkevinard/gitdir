@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/therealkevinard/gitdir/commands/open"
 	"os"
 	"path"
 
@@ -29,6 +30,7 @@ func main() {
 	subcommands.Register(&clone.Command{CollectionRoot: root}, mgtGroup)
 
 	const navGroup = "navigation"
+	subcommands.Register(&open.Command{CollectionRoot: root}, navGroup)
 	subcommands.Register(&cd.Command{CollectionRoot: root}, navGroup)
 	subcommands.Register(&ls.Command{CollectionRoot: root}, navGroup)
 
