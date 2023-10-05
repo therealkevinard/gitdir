@@ -6,7 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"log"
+	"github.com/therealkevinard/gitdir/commands"
 	"os"
 	"os/exec"
 
@@ -39,42 +39,42 @@ func (c *Command) SetFlags(_ *flag.FlagSet) {}
 func (c *Command) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	// check args
 	if f.Arg(0) == "" {
-		log.Println("repo url must be provided as only positional argument")
+		commands.Notify(commands.NotifyError, "repo url must be provided as only positional argument")
 		return subcommands.ExitUsageError
 	}
 	c.repoURL = f.Arg(0)
 
 	subPath, err := dirtools.NormalizeRepoURL(c.repoURL)
 	if err != nil {
-		fmt.Printf("!! failed normalizing repo: %v", err)
+		commands.Notify(commands.NotifyError, fmt.Sprintf("failed normalizing repo: %v", err))
 		return subcommands.ExitFailure
 	}
 
 	// create clone directory
 	c.localDir = dirtools.CompileDirPath(c.CollectionRoot, subPath)
 	if _, err = os.Stat(c.localDir); !errors.Is(err, os.ErrNotExist) {
-		fmt.Printf("!! directory exists. not re-creating %s\n", c.localDir)
+		commands.Notify(commands.NotifyError, fmt.Sprintf("directory exists. not re-creating %s", c.localDir))
 		return subcommands.ExitFailure
 	}
 
-	fmt.Printf("> creating %s\n", c.localDir)
+	commands.Notify(commands.NotifyCreate, fmt.Sprintf("creating %s", c.localDir))
+
 	//nolint:gomnd
 	if err = os.MkdirAll(c.localDir, 0o750); err != nil {
-		fmt.Printf("!! error creating base directory: %v", err)
+		commands.Notify(commands.NotifyError, fmt.Sprintf("error creating base directory: %v", err))
 		return subcommands.ExitFailure
 	}
 
 	// clone operation
-	fmt.Printf("> cloning %s into %s\n", c.repoURL, c.localDir)
+	commands.Notify(commands.NotifyClone, fmt.Sprintf("cloning %s into %s", c.repoURL, c.localDir))
 	out, err := c.cloneRepo()
 	if err != nil {
-		fmt.Printf("!! error cloning. leaving empty dir at %s\n", c.localDir)
+		commands.Notify(commands.NotifyError, fmt.Sprintf("error cloning. leaving empty dir at %s", c.localDir))
 		return subcommands.ExitFailure
 	}
 
 	// status output
-	fmt.Printf("> finished. git says: \n%s\n-------\n", out)
-
+	commands.Notify(commands.NotifyDone, fmt.Sprintf("finished. git says: \n%s", out))
 	return subcommands.ExitSuccess
 }
 
