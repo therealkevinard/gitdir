@@ -15,9 +15,15 @@ import (
 
 const (
 	name     = "open"
-	synopsis = "open repo in browser"
+	synopsis = "[alpha] open repo in browser"
 	usage    = `
-open a project's web url
+open a project's web url. local directory is parsed into the original browser url 
+acceptable arguments are
+- read from stdin. 
+	echo "git@github.com:therealkevinard/gitdir.git | gitdir open -" 
+. open project in $PWD.
+	gitdir open .
+<string> open 
 `
 )
 

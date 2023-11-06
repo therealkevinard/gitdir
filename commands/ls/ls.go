@@ -12,10 +12,11 @@ import (
 
 const (
 	name     = "ls"
-	synopsis = "list local repositories"
+	synopsis = "list all repos under your collection root"
 	usage    = `
 gitdir ls 
-provides a list of local repositories housed under your collection root 
+provides a list of local repositories housed under your collection root  
+works from anywhere in your filesystem
 
 walks the directory tree starting at collection root, listing-out all git repos. 
 plays well with fzf.

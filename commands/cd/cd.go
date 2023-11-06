@@ -22,9 +22,9 @@ import (
 
 const (
 	name     = "cd"
-	synopsis = "root-aware cd. move into a local gitdir directory"
+	synopsis = "root-aware cd. move from anywhere to a local gitdir directory"
 	usage    = `
-gitdir cd - 
+gitdir cd -  
 cd to directory within your collection root.
 
 reads target directory from stdin, prefixes your root, and writes a cd script to ~/Caches/gitdir/gdnext.sh 
