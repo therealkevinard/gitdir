@@ -30,7 +30,7 @@ func (c *Command) Usage() string            { return usage }
 func (c *Command) SetFlags(_ *flag.FlagSet) {}
 
 func (c *Command) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
-	gdcdAlias := fmt.Sprintf("%s ls | fzf | %s cd - && source %s", c.paths.OwnBinaryName, c.paths.OwnBinaryName, c.paths.OwnBinaryName)
+	gdcdAlias := fmt.Sprintf("%s ls | fzf | %s cd - && source %s", c.paths.OwnBinaryName, c.paths.OwnBinaryName, c.paths.CDScriptPath)
 	gdopenAlias := fmt.Sprintf("%s ls | fzf | %s open -", c.paths.OwnBinaryName, c.paths.OwnBinaryName)
 
 	//nolint
