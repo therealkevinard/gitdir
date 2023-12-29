@@ -25,12 +25,15 @@ plays well with fzf.
 
 type Command struct {
 	CollectionRoot string
+	optionFullPath bool
 }
 
-func (c *Command) Name() string             { return name }
-func (c *Command) Synopsis() string         { return synopsis }
-func (c *Command) Usage() string            { return usage }
-func (c *Command) SetFlags(_ *flag.FlagSet) {}
+func (c *Command) Name() string     { return name }
+func (c *Command) Synopsis() string { return synopsis }
+func (c *Command) Usage() string    { return usage }
+func (c *Command) SetFlags(f *flag.FlagSet) {
+	f.BoolVar(&c.optionFullPath, "dirs", false, `report absolute path, not repo name. this works well with scripted cd.`)
+}
 
 func (c *Command) Execute(_ context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	dirs, err := dirtools.FindGitDirs(c.CollectionRoot)
@@ -42,7 +45,7 @@ func (c *Command) Execute(_ context.Context, _ *flag.FlagSet, _ ...interface{}) 
 	list := dirtools.NewRepoList(c.CollectionRoot, dirs)
 
 	for _, k := range list.Keys() {
-		fmt.Println(list[k].Short())
+		fmt.Println(list[k].Path(c.optionFullPath))
 	}
 
 	return subcommands.ExitSuccess
