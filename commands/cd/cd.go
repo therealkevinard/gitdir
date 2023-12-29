@@ -11,6 +11,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/therealkevinard/gitdir/commands"
+	context_keys "github.com/therealkevinard/gitdir/context-keys"
 	"log"
 	"os"
 	"path"
@@ -42,7 +44,13 @@ func (c *Command) Synopsis() string         { return synopsis }
 func (c *Command) Usage() string            { return usage }
 func (c *Command) SetFlags(_ *flag.FlagSet) {}
 
-func (c *Command) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
+func (c *Command) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
+	userEnvironment, ok := ctx.Value(context_keys.UserEnvCtx).(*commandtools.UserEnvironment)
+	if !ok {
+		commands.Notify(commands.NotifyError, "no UserEnvironment found in context")
+		return subcommands.ExitFailure
+	}
+
 	var cdTo string
 	if f.NArg() != 1 || f.Arg(0) != "-" {
 		return subcommands.ExitUsageError
@@ -59,7 +67,7 @@ func (c *Command) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 	}
 
 	// write bash using selection
-	if fileErr := c.writeCDToSelection(path.Join(c.CollectionRoot, cdTo)); fileErr != nil {
+	if fileErr := c.writeCDToSelection(userEnvironment, path.Join(c.CollectionRoot, cdTo)); fileErr != nil {
 		log.Printf("error creating cd script: %v", fileErr)
 		return subcommands.ExitFailure
 	}
@@ -67,7 +75,8 @@ func (c *Command) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 	return subcommands.ExitSuccess
 }
 
-func (c *Command) writeCDToSelection(cdTo string) error {
+// writeCDToSelection writes a bash script to CDShellPath as defined in UserEnvironment that calls simply `cd {{.cdTo}}`
+func (c *Command) writeCDToSelection(env *commandtools.UserEnvironment, cdTo string) error {
 	if cdTo == "" {
 		return commandtools.ErrInvalidDirectory
 	}
@@ -77,14 +86,10 @@ func (c *Command) writeCDToSelection(cdTo string) error {
 		cdTo = path.Clean(path.Join(c.CollectionRoot, cdTo))
 	}
 
-	// prepare write-path
-	cacheDir, _ := os.UserCacheDir()
-	scriptpath := path.Clean(path.Join(cacheDir, "gitdir", "gdnext.sh"))
-
 	// create script
 	//nolint:gomnd
-	_ = os.MkdirAll(path.Dir(scriptpath), 0o750) // TODO: check error
-	f, fileErr := os.Create(scriptpath)
+	_ = os.MkdirAll(path.Dir(env.CDShellPath()), 0o750) // TODO: check error
+	f, fileErr := os.Create(env.CDShellPath())
 	if fileErr != nil {
 		return fileErr //nolint:wrapcheck
 	}

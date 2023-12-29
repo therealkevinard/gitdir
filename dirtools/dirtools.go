@@ -60,7 +60,6 @@ func NormalizeRepoURL(repoURL string) (string, error) {
 
 // FindGitDirs uses filepath.Walk to recursively identify git repos, returning the slice of git paths
 // repos are identified as `parent directory of a .git directory`.
-// TODO(perf): we can trust there are no useful .git dirs within a git repo. when we catch a .git, abandon that branch.
 func FindGitDirs(root string) ([]string, error) {
 	items := make([]string, 0)
 	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {

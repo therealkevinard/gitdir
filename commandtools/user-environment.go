@@ -6,9 +6,13 @@ import (
 	"path"
 )
 
+// UserEnvironment stores key global info from the user's environment
 type UserEnvironment struct {
-	userHomeDir    string
-	userCacheDir   string
+	// user os' home dir
+	userHomeDir string
+	// user os' cache dir
+	userCacheDir string
+	// path to cd shell script. this sh is updated as part of the cd subcommand
 	gdNextFilepath string
 }
 
@@ -28,7 +32,7 @@ func InitUserEnvironment() *UserEnvironment {
 	return &UserEnvironment{
 		userHomeDir:    home,
 		userCacheDir:   cache,
-		gdNextFilepath: path.Join(cache, "gitdir", "gdnext.sh"),
+		gdNextFilepath: path.Clean(path.Join(cache, "gitdir", "gdnext.sh")),
 	}
 }
 
