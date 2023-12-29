@@ -1,4 +1,4 @@
-package commandtools
+package errors
 
 import "errors"
 

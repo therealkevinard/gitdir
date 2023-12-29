@@ -2,14 +2,14 @@ package dirtools
 
 import (
 	"fmt"
+	"github.com/therealkevinard/gitdir/errors"
+	"io/fs"
 	"net/url"
 	"os"
 	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
-
-	"github.com/therealkevinard/gitdir/commandtools"
 )
 
 // regexes.
@@ -49,7 +49,7 @@ func NormalizeRepoURL(repoURL string) (string, error) {
 		return "", fmt.Errorf("error parsing url: %w", err)
 	}
 	if parsed.Host == "" || parsed.Path == "" {
-		return "", fmt.Errorf("invalid url %s (sanitized to %s): %w", repoURL, cleanRepoURL, commandtools.ErrInvalidURL)
+		return "", fmt.Errorf("invalid url %s (sanitized to %s): %w", repoURL, cleanRepoURL, errors.ErrInvalidURL)
 	}
 
 	// build final directory
@@ -60,12 +60,12 @@ func NormalizeRepoURL(repoURL string) (string, error) {
 
 // FindGitDirs uses filepath.Walk to recursively identify git repos, returning the slice of git paths
 // repos are identified as `parent directory of a .git directory`.
-// TODO(perf): we can trust there are no useful .git dirs within a git repo. when we catch a .git, abandon that branch.
 func FindGitDirs(root string) ([]string, error) {
 	items := make([]string, 0)
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if info.IsDir() && info.Name() == ".git" {
+	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() && d.Name() == ".git" {
 			items = append(items, strings.TrimSuffix(path, "/.git"))
+			return filepath.SkipDir
 		}
 
 		return nil
@@ -73,4 +73,21 @@ func FindGitDirs(root string) ([]string, error) {
 
 	//nolint: wrapcheck
 	return items, err
+}
+
+// permissions used for created bashes. should be executable.
+const scriptPerms = 0o750
+
+// WriteExecFile is used to write temporary shell scripts with +x . It should not be used for general file-writing.
+func WriteExecFile(scriptPath, content string) error {
+	_ = os.MkdirAll(path.Dir(scriptPath), scriptPerms) // TODO: check error
+	f, fileErr := os.Create(scriptPath)
+	if fileErr != nil {
+		return fmt.Errorf("error creating script file: %w", fileErr)
+	}
+	defer func() { _ = f.Close() }()
+
+	_, _ = f.WriteString(content)
+
+	return nil
 }

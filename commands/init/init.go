@@ -4,11 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
-
 	"github.com/google/subcommands"
-	"github.com/therealkevinard/gitdir/commandtools"
-	context_keys "github.com/therealkevinard/gitdir/context-keys"
+	"github.com/therealkevinard/gitdir/dirtools"
 )
 
 const (
@@ -19,7 +16,13 @@ source this into your shell's .profile to prepare environment, collection root, 
 `
 )
 
-type Command struct{}
+type Command struct {
+	paths *dirtools.UserPaths
+}
+
+func New(ctx context.Context) *Command {
+	return &Command{paths: dirtools.GetUserPaths(ctx)}
+}
 
 func (c *Command) Name() string             { return name }
 func (c *Command) Synopsis() string         { return synopsis }
@@ -27,22 +30,8 @@ func (c *Command) Usage() string            { return usage }
 func (c *Command) SetFlags(_ *flag.FlagSet) {}
 
 func (c *Command) Execute(ctx context.Context, _ *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
-	selfCmd, ok := ctx.Value(context_keys.SelfNameCtx).(string)
-	if !ok {
-		err := fmt.Errorf("command name not found in command context: %w", commandtools.ErrContextMismatch)
-		log.Fatal(err)
-		return subcommands.ExitFailure
-	}
-
-	ue, ok := ctx.Value(context_keys.UserEnvCtx).(*commandtools.UserEnvironment)
-	if !ok {
-		err := fmt.Errorf("user environment not found in command context: %w", commandtools.ErrContextMismatch)
-		log.Fatal(err)
-		return subcommands.ExitFailure
-	}
-
-	gdcdAlias := fmt.Sprintf("%s ls | fzf | %s cd - && source %s", selfCmd, selfCmd, ue.CDShellPath())
-	gdopenAlias := fmt.Sprintf("%s ls | fzf | %s open -", selfCmd, selfCmd)
+	gdcdAlias := fmt.Sprintf("%s ls | fzf | %s cd - && source %s", c.paths.OwnBinaryName, c.paths.OwnBinaryName, c.paths.CDScriptPath)
+	gdopenAlias := fmt.Sprintf("%s ls | fzf | %s open -", c.paths.OwnBinaryName, c.paths.OwnBinaryName)
 
 	//nolint
 	fmt.Printf(`

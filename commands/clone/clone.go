@@ -26,9 +26,13 @@ ssh urls, http auth, and many other nuances are normalized to a stable path with
 )
 
 type Command struct {
-	CollectionRoot string
-	repoURL        string
-	localDir       string
+	repoURL  string
+	localDir string
+	paths    *dirtools.UserPaths
+}
+
+func New(ctx context.Context) *Command {
+	return &Command{paths: dirtools.GetUserPaths(ctx)}
 }
 
 func (c *Command) Name() string             { return name }
@@ -51,7 +55,7 @@ func (c *Command) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 	}
 
 	// create clone directory
-	c.localDir = dirtools.CompileDirPath(c.CollectionRoot, subPath)
+	c.localDir = dirtools.CompileDirPath(c.paths.CollectionRoot, subPath)
 	if _, err = os.Stat(c.localDir); !errors.Is(err, os.ErrNotExist) {
 		commands.Notify(commands.NotifyError, fmt.Sprintf("directory exists. not re-creating %s", c.localDir))
 		return subcommands.ExitFailure

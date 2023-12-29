@@ -18,6 +18,15 @@ func NewLocalRepoPath(root, full string) *LocalRepoPath {
 	}
 }
 
+// Path returns the dir path. <full> determines if the full or short path is returned
+func (rp *LocalRepoPath) Path(full bool) string {
+	if full {
+		return rp.full
+	}
+
+	return rp.short
+}
+
 // Short returns the dir path with common prefix trimmed.
 func (rp *LocalRepoPath) Short() string { return rp.short }
 
