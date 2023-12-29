@@ -26,6 +26,7 @@ const (
 	usage    = `
 gitdir cd -  
 cd to directory within your collection root.
+to support this command, add source <(gitdir init) to your bash profile/rc file. 
 
 reads target directory from stdin, prefixes your root, and writes a cd script to ~/Caches/gitdir/gdnext.sh 
 it's important to source this script afterward to exec the actual cd. 

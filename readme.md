@@ -5,7 +5,7 @@ a tiny little tool for organizing local git repos - immensely inspired by the ol
 establishes a root directory that will hold git repos. within this root directory, repos are placed
 in directories that mirror the clone urls. clone url is normalized to a stable directory path and the cloned repo is placed in a deterministic location
 
-## install 
+## install
 
 - install the binary
 
@@ -16,10 +16,12 @@ go install github.com/therealkevinard/gitdir@latest
 - setup profile: add `source <(gitdir init)` to your .profile.  
   this script sets the `$GITDIR_COLLECTION_ROOT` to default $HOME/Workspaces if it's unset, and creates the directory if
   it doesn't exist.   
-  it also creates the fzf alias that makes `gitdir cd` pleasant. 
+  it also creates the fzf alias that makes `gitdir cd` pleasant.
+- cd can also be achieved with `cd $(gitdir ls -dirs | fzf)`. the -dirs flag returns absolute paths, which can be passed directly to cd
 
 ## subcommands
 
+```
 Usage: gitdir <flags> <subcommand> <subcommand args>
 
 Subcommands for navigation:
@@ -35,4 +37,4 @@ Subcommands for support:
 	flags            describe all known top-level flags
 	help             describe subcommands and their syntax
 	init             initializes shell env
-
+```
