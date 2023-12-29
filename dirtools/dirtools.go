@@ -78,8 +78,7 @@ func FindGitDirs(root string) ([]string, error) {
 // permissions used for created bashes. should be executable.
 const scriptPerms = 0o750
 
-// WriteExecFile is used to write tmp shell scripts.
-// It should not be used for general file-writing.
+// WriteExecFile is used to write temporary shell scripts with +x . It should not be used for general file-writing.
 func WriteExecFile(scriptPath, content string) error {
 	_ = os.MkdirAll(path.Dir(scriptPath), scriptPerms) // TODO: check error
 	f, fileErr := os.Create(scriptPath)

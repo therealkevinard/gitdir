@@ -35,12 +35,16 @@ it's important to source this script afterward to exec the actual cd.
 )
 
 type Command struct {
-	cdTo  string
-	paths *dirtools.UserPaths
+	cdTo          string
+	paths         *dirtools.UserPaths
+	writeExecFile func(string, string) error // abstracted for test mocks
 }
 
 func New(ctx context.Context) *Command {
-	return &Command{paths: dirtools.GetUserPaths(ctx)}
+	return &Command{
+		paths:         dirtools.GetUserPaths(ctx),
+		writeExecFile: dirtools.WriteExecFile,
+	}
 }
 
 func (c *Command) Name() string     { return name }
@@ -63,7 +67,7 @@ func (c *Command) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{}
 	}
 
 	// write bash using selection
-	if fileErr := c.writeCDToSelection(path.Join(c.paths.CollectionRoot, c.cdTo)); fileErr != nil {
+	if fileErr := c.createAndWriteScript(); fileErr != nil {
 		log.Printf("error creating cd script: %v", fileErr)
 		return subcommands.ExitFailure
 	}
@@ -71,21 +75,30 @@ func (c *Command) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{}
 	return subcommands.ExitSuccess
 }
 
-// writeCDToSelection writes a bash script to CDShellPath as defined in UserPaths that calls simply `cd {{.cdTo}}`
-func (c *Command) writeCDToSelection(cdTo string) error {
-	if cdTo == "" {
-		return errors.ErrInvalidDirectory
+// createAndWriteScript passes the output of getScriptContent through writeExecFile
+func (c *Command) createAndWriteScript() error {
+	content, err := c.getScriptContent()
+	if err != nil {
+		return err
 	}
 
-	// prepare cd-path. prepend the CollectionRoot if needed
-	if !strings.HasPrefix(cdTo, c.paths.CollectionRoot) {
-		cdTo = path.Clean(path.Join(c.paths.CollectionRoot, cdTo))
-	}
-
-	// create script
-	if err := dirtools.WriteExecFile(c.paths.CDScriptPath, fmt.Sprintf(`cd %s`, cdTo)); err != nil {
+	if err := c.writeExecFile(c.paths.CDScriptPath, content); err != nil {
 		return fmt.Errorf("error writing script content: %w", err)
 	}
 
 	return nil
+}
+
+// getScriptContent creates the cd script based off of c.cdTo
+func (c *Command) getScriptContent() (string, error) {
+	if c.cdTo == "" {
+		return "", errors.ErrInvalidDirectory
+	}
+
+	// make absolute by prepending collectionroot
+	if !strings.HasPrefix(c.cdTo, c.paths.CollectionRoot) {
+		c.cdTo = path.Join(c.paths.CollectionRoot, c.cdTo)
+	}
+
+	return fmt.Sprintf(`cd %s`, path.Clean(c.cdTo)), nil
 }
