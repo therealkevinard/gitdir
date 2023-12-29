@@ -2,8 +2,8 @@ package dirtools
 
 import (
 	"fmt"
+	"io/fs"
 	"net/url"
-	"os"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -63,9 +63,10 @@ func NormalizeRepoURL(repoURL string) (string, error) {
 // TODO(perf): we can trust there are no useful .git dirs within a git repo. when we catch a .git, abandon that branch.
 func FindGitDirs(root string) ([]string, error) {
 	items := make([]string, 0)
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if info.IsDir() && info.Name() == ".git" {
+	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() && d.Name() == ".git" {
 			items = append(items, strings.TrimSuffix(path, "/.git"))
+			return filepath.SkipDir
 		}
 
 		return nil
