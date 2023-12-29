@@ -53,7 +53,7 @@ func prepareCommandContext() context.Context {
 	collRoot := os.Getenv("GITDIR_COLLECTION_ROOT")
 	ctx = context.WithValue(ctx, context_keys.CollRootCtx, collRoot)
 
-	//
+	// build userenvironment, attach to context
 	userEnv := commandtools.InitUserEnvironment()
 	ctx = context.WithValue(ctx, context_keys.UserEnvCtx, userEnv)
 

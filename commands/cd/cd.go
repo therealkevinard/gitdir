@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"github.com/therealkevinard/gitdir/commands"
 	context_keys "github.com/therealkevinard/gitdir/context-keys"
+	"github.com/therealkevinard/gitdir/dirtools"
 	"log"
 	"os"
 	"path"
@@ -37,12 +38,15 @@ it's important to source this script afterward to exec the actual cd.
 
 type Command struct {
 	CollectionRoot string
+	cdTo           string
 }
 
-func (c *Command) Name() string             { return name }
-func (c *Command) Synopsis() string         { return synopsis }
-func (c *Command) Usage() string            { return usage }
-func (c *Command) SetFlags(_ *flag.FlagSet) {}
+func (c *Command) Name() string     { return name }
+func (c *Command) Synopsis() string { return synopsis }
+func (c *Command) Usage() string    { return usage }
+func (c *Command) SetFlags(f *flag.FlagSet) {
+	f.StringVar(&c.cdTo, "to", "", "target path")
+}
 
 func (c *Command) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	userEnvironment, ok := ctx.Value(context_keys.UserEnvCtx).(*commandtools.UserEnvironment)
@@ -51,23 +55,19 @@ func (c *Command) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{}
 		return subcommands.ExitFailure
 	}
 
-	var cdTo string
-	if f.NArg() != 1 || f.Arg(0) != "-" {
-		return subcommands.ExitUsageError
+	// read path from stdin if we have the conventional - argument
+	if f.Arg(0) == "-" {
+		scanner := bufio.NewScanner(os.Stdin)
+		for scanner.Scan() {
+			c.cdTo = scanner.Text()
+		}
 	}
-
-	// read path from stdin
-	scanner := bufio.NewScanner(os.Stdin)
-	for scanner.Scan() {
-		cdTo = scanner.Text()
-	}
-
-	if cdTo == "" {
+	if c.cdTo == "" {
 		return subcommands.ExitUsageError
 	}
 
 	// write bash using selection
-	if fileErr := c.writeCDToSelection(userEnvironment, path.Join(c.CollectionRoot, cdTo)); fileErr != nil {
+	if fileErr := c.writeCDToSelection(userEnvironment, path.Join(c.CollectionRoot, c.cdTo)); fileErr != nil {
 		log.Printf("error creating cd script: %v", fileErr)
 		return subcommands.ExitFailure
 	}
@@ -87,16 +87,9 @@ func (c *Command) writeCDToSelection(env *commandtools.UserEnvironment, cdTo str
 	}
 
 	// create script
-	//nolint:gomnd
-	_ = os.MkdirAll(path.Dir(env.CDShellPath()), 0o750) // TODO: check error
-	f, fileErr := os.Create(env.CDShellPath())
-	if fileErr != nil {
-		return fileErr //nolint:wrapcheck
+	if err := dirtools.WriteExecFile(env.CDShellPath(), fmt.Sprintf(`cd %s`, cdTo)); err != nil {
+		return fmt.Errorf("error writing script content: %w", err)
 	}
-	defer func() { _ = f.Close() }()
-
-	// write file. no need to handle the no-selection case, as os.Create has truncated the file already
-	_, _ = f.WriteString(fmt.Sprintf(`cd %s`, cdTo))
 
 	return nil
 }
