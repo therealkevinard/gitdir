@@ -11,16 +11,14 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/therealkevinard/gitdir/commands"
-	context_keys "github.com/therealkevinard/gitdir/context-keys"
 	"github.com/therealkevinard/gitdir/dirtools"
+	"github.com/therealkevinard/gitdir/errors"
 	"log"
 	"os"
 	"path"
 	"strings"
 
 	"github.com/google/subcommands"
-	"github.com/therealkevinard/gitdir/commandtools"
 )
 
 const (
@@ -37,8 +35,12 @@ it's important to source this script afterward to exec the actual cd.
 )
 
 type Command struct {
-	CollectionRoot string
-	cdTo           string
+	cdTo  string
+	paths *dirtools.UserPaths
+}
+
+func New(ctx context.Context) *Command {
+	return &Command{paths: dirtools.GetUserPaths(ctx)}
 }
 
 func (c *Command) Name() string     { return name }
@@ -49,12 +51,6 @@ func (c *Command) SetFlags(f *flag.FlagSet) {
 }
 
 func (c *Command) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
-	userEnvironment, ok := ctx.Value(context_keys.UserEnvCtx).(*commandtools.UserEnvironment)
-	if !ok {
-		commands.Notify(commands.NotifyError, "no UserEnvironment found in context")
-		return subcommands.ExitFailure
-	}
-
 	// read path from stdin if we have the conventional - argument
 	if f.Arg(0) == "-" {
 		scanner := bufio.NewScanner(os.Stdin)
@@ -67,7 +63,7 @@ func (c *Command) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{}
 	}
 
 	// write bash using selection
-	if fileErr := c.writeCDToSelection(userEnvironment, path.Join(c.CollectionRoot, c.cdTo)); fileErr != nil {
+	if fileErr := c.writeCDToSelection(path.Join(c.paths.CollectionRoot, c.cdTo)); fileErr != nil {
 		log.Printf("error creating cd script: %v", fileErr)
 		return subcommands.ExitFailure
 	}
@@ -75,19 +71,19 @@ func (c *Command) Execute(ctx context.Context, f *flag.FlagSet, _ ...interface{}
 	return subcommands.ExitSuccess
 }
 
-// writeCDToSelection writes a bash script to CDShellPath as defined in UserEnvironment that calls simply `cd {{.cdTo}}`
-func (c *Command) writeCDToSelection(env *commandtools.UserEnvironment, cdTo string) error {
+// writeCDToSelection writes a bash script to CDShellPath as defined in UserPaths that calls simply `cd {{.cdTo}}`
+func (c *Command) writeCDToSelection(cdTo string) error {
 	if cdTo == "" {
-		return commandtools.ErrInvalidDirectory
+		return errors.ErrInvalidDirectory
 	}
 
 	// prepare cd-path. prepend the CollectionRoot if needed
-	if !strings.HasPrefix(cdTo, c.CollectionRoot) {
-		cdTo = path.Clean(path.Join(c.CollectionRoot, cdTo))
+	if !strings.HasPrefix(cdTo, c.paths.CollectionRoot) {
+		cdTo = path.Clean(path.Join(c.paths.CollectionRoot, cdTo))
 	}
 
 	// create script
-	if err := dirtools.WriteExecFile(env.CDShellPath(), fmt.Sprintf(`cd %s`, cdTo)); err != nil {
+	if err := dirtools.WriteExecFile(c.paths.CDScriptPath, fmt.Sprintf(`cd %s`, cdTo)); err != nil {
 		return fmt.Errorf("error writing script content: %w", err)
 	}
 

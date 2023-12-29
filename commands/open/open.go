@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/google/subcommands"
 	"github.com/therealkevinard/gitdir/commands"
+	"github.com/therealkevinard/gitdir/dirtools"
 	"net/url"
 	"os"
 	"os/exec"
@@ -28,7 +29,11 @@ acceptable arguments are
 )
 
 type Command struct {
-	CollectionRoot string
+	paths *dirtools.UserPaths
+}
+
+func New(ctx context.Context) *Command {
+	return &Command{paths: dirtools.GetUserPaths(ctx)}
 }
 
 func (c *Command) Name() string             { return name }
@@ -66,8 +71,8 @@ func (c *Command) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) 
 		return subcommands.ExitUsageError
 	}
 
-	if strings.HasPrefix(openpath, c.CollectionRoot) {
-		openpath = strings.TrimPrefix(openpath, c.CollectionRoot)
+	if strings.HasPrefix(openpath, c.paths.CollectionRoot) {
+		openpath = strings.TrimPrefix(openpath, c.paths.CollectionRoot)
 		openpath = strings.TrimPrefix(openpath, "/") // TODO: this is all so gross. make a better string cleaner one day.
 	}
 
